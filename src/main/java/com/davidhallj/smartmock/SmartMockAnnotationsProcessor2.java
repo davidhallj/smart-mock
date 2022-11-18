@@ -1,13 +1,25 @@
 package com.davidhallj.smartmock;
 
+import com.davidhallj.smartmock.config.SmartMockConfiguration;
+import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
+import com.davidhallj.smartmock.jaxrs.JaxrsFactoryImpl;
 import com.davidhallj.smartmock.util.ReflectionHelper;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
-public class SmartMockAnnotationsProcessor {
+public class SmartMockAnnotationsProcessor2 {
 
-    public void process(Class<?> clazz, Object testInstance, String methodName) {
+    // Singleton? Where should this live?
+    private static JaxrsFactory JAXRS_FACTORY = new JaxrsFactoryImpl();
+
+    /**
+     * Crawls the test instance and creates SmartMocks for the members that are annotated as such
+     * @param clazz
+     * @param testInstance
+     * @param junitTestMethodName - name of current junit test being executed
+     */
+    public void process(Class<?> clazz, Object testInstance, String junitTestMethodName) {
 
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
@@ -19,7 +31,7 @@ public class SmartMockAnnotationsProcessor {
 
                     SmartMock smartMockAnnotation = (SmartMock) annotation;
 
-                    Object smartMock = buildMockFromAnnotation(smartMockAnnotation, field, methodName);
+                    Object smartMock = buildMockFromAnnotation(smartMockAnnotation, field, junitTestMethodName);
 
                     throwIfAlreadyAssigned(field, alreadyAssigned);
                     alreadyAssigned = true;
@@ -34,18 +46,13 @@ public class SmartMockAnnotationsProcessor {
         }
     }
 
-    public static Object buildMockFromAnnotation(SmartMock smartMock, Field annotatedField, String methodName) {
+    public static Object buildMockFromAnnotation(SmartMock smartMock, Field annotatedField, String junitTestMethodName) {
 
-        final SmartMockFactory smartMockFactory = SmartMockFactory.builder()
-                //.exceptionResolver(new WebExceptionResolver()) // More work to make this configurable via annotations
-                //.testResourcesDir(DEFAULT_TEST_RESOURCES_DIR) // Not configurable via annotations yet
-                .cacheRootDir(smartMock.cacheRootDir())
-                .cacheNamingStrategy(smartMock.cacheNamingStrategy())
-                .executionStrategy(smartMock.executionStrategy())
-                .cacheWriteStrategy(smartMock.cacheWriteStrategy())
-                .build();
+        final SmartMockConfiguration config = SmartMockConfiguration.create(smartMock);
 
-        return smartMockFactory.createSmartMock(smartMock.url(), annotatedField.getType(), methodName);
+        final SmartMockFactory2 smartMockFactory = new SmartMockFactory2(JAXRS_FACTORY, config);
+
+        return smartMockFactory.createSmartMock(smartMock.url(), annotatedField.getType(), junitTestMethodName);
     }
 
     public void throwIfAlreadyAssigned(Field field, boolean alreadyAssigned) {

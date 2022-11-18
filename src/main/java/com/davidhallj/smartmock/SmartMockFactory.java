@@ -2,9 +2,9 @@ package com.davidhallj.smartmock;
 
 import com.davidhallj.smartmock.config.CacheNamingStrategy;
 import com.davidhallj.smartmock.config.CacheWriteStrategy;
-import com.davidhallj.smartmock.config.ExceptionResolver;
+import com.davidhallj.smartmock.core.ExceptionResolver;
 import com.davidhallj.smartmock.config.ExecutionStrategy;
-import com.davidhallj.smartmock.config.WebExceptionResolver;
+import com.davidhallj.smartmock.core.WebExceptionResolver;
 import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
 import com.davidhallj.smartmock.jaxrs.JaxrsFactoryImpl;
 import com.davidhallj.smartmock.proxy.CachingInvocationHandler;
@@ -16,7 +16,7 @@ import java.lang.reflect.InvocationHandler;
 
 @Builder
 @Getter
-public class SmartMockFactory  {
+public class SmartMockFactory {
 
     public static final ExceptionResolver DEFAULT_EXCEPTION_RESOLVER = new WebExceptionResolver();
     public static final String DEFAULT_TEST_RESOURCES_DIR  = "src/test/resources"; // assumes maven
@@ -66,7 +66,11 @@ public class SmartMockFactory  {
 
         InvocationHandler cachingInvocationHandler = new CachingInvocationHandler<>(
                 createRestResource(uri, clazz),
-                this.exceptionResolver, this.testResourcesDir, resolvedCacheDirectory, this.executionStrategy, this.cacheWriteStrategy
+                this.exceptionResolver,
+                this.testResourcesDir,
+                resolvedCacheDirectory,
+                this.executionStrategy,
+                this.cacheWriteStrategy
         );
 
         SmartMockProxyImpl<T> smartMockProxy = new SmartMockProxyImpl<>(clazz, cachingInvocationHandler);

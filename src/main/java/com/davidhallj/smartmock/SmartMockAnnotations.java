@@ -18,7 +18,8 @@ public class SmartMockAnnotations {
             // TODO use a better exception here
             throw new RuntimeException("testClass cannot be null");
         } else {
-            final SmartMockAnnotationsProcessor smartMockAnnotationsProcessor = new SmartMockAnnotationsProcessor();
+            //final SmartMockAnnotationsProcessor smartMockAnnotationsProcessor = new SmartMockAnnotationsProcessor();
+            final SmartMockAnnotationsProcessor2 smartMockAnnotationsProcessor = new SmartMockAnnotationsProcessor2();
             smartMockAnnotationsProcessor.process(testClass.getClass(), testClass, methodName);
         }
     }

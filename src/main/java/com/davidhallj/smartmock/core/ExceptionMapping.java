@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.config;
+package com.davidhallj.smartmock.core;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,14 +12,14 @@ public class ExceptionMapping<T extends RuntimeException> {
     @Getter
     private Class<T> cls;
     private Supplier<T> getInstance;
-    private Function<RuntimeException, T> wrapInstance;
+    private Function<RuntimeException, T> runtimeExceptionResolver;
 
     public T instantiate() {
         return getInstance.get();
     }
 
     public T wrap(RuntimeException runtimeException) {
-        return wrapInstance.apply(runtimeException);
+        return runtimeExceptionResolver.apply(runtimeException);
     }
 
 }

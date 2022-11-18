@@ -1,7 +1,6 @@
 package com.davidhallj.smartmock;
 
-import com.davidhallj.smartmock.config.CacheWriteStrategy;
-import com.davidhallj.smartmock.config.ExecutionStrategy;
+import com.davidhallj.smartmock.config.RunConfig;
 import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
 import com.davidhallj.smartmock.jaxrs.JaxrsFactoryImpl;
 import com.davidhallj.smartmock.junit.SmartMockExtender;
@@ -17,6 +16,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.MediaType;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,8 +27,20 @@ public class SmartMockTest {
 
     private static JaxrsFactory jaxrsFactory;
 
-    @SmartMock(url = "http://0.0.0.0:8181/services/hello", executionStrategy = ExecutionStrategy.ALWAYS_USE_REMOTE, cacheWriteStrategy = CacheWriteStrategy.OFF)
+    //@SmartMock(url = "http://0.0.0.0:8181/services/hello", executionStrategy = ExecutionStrategy.ALWAYS_USE_REMOTE, cacheWriteStrategy = CacheWriteStrategy.OFF,
+    //        advanced = @Advanced(
+    //                cacheNamingStategy = CacheNamingStrategy.METHOD_SCOPED
+    //))
+    //private HelloResource helloResource;
+
+
+    @SmartMock(url = "http://0.0.0.0:8181/services/hello", runConfig = RunConfig.READ_ONLY_MODE
+            //advanced = @Advanced(
+            //        cacheNamingStategy = CacheNamingStrategy.METHOD_SCOPED
+            //)
+    )
     private HelloResource helloResource;
+
 
     @BeforeAll
     public static void classSetup() {
@@ -46,6 +58,11 @@ public class SmartMockTest {
 
         assertEquals("Hello world!", greeting.getGreeting());
 
+        helloResource.greet();
+        helloResource.greet();
+        helloResource.greet();
+        helloResource.greet();
+
     }
 
     @Consumes(MediaType.APPLICATION_JSON)
@@ -53,10 +70,12 @@ public class SmartMockTest {
     public interface HelloResource {
 
         @GET
-        @Path("greeting")
-        @Consumes(MediaType.APPLICATION_JSON)
-        @Produces(MediaType.APPLICATION_JSON)
+        @Path("greet")
         Greeting greet();
+
+        @GET
+        @Path("willThrow")
+        void willThrow();
 
     }
 
@@ -79,6 +98,12 @@ public class SmartMockTest {
                     .greeting("Hello world!")
                     .build();
         }
+
+        @Override
+        public void willThrow() {
+            throw new ServerErrorException(500);
+        }
+
     }
 
     // TODO pull into an actual util

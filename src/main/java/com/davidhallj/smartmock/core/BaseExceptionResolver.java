@@ -1,9 +1,9 @@
-package com.davidhallj.smartmock.config;
+package com.davidhallj.smartmock.core;
 
 import java.util.List;
 import java.util.Optional;
 
-public abstract class BaseExceptionResolver implements ExceptionResolver{
+public abstract class BaseExceptionResolver implements ExceptionResolver {
 
     protected abstract List<ExceptionMapping> getExceptionMappings();
 

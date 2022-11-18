@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.config;
+package com.davidhallj.smartmock.core;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;

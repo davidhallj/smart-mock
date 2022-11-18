@@ -1,7 +1,7 @@
 package com.davidhallj.smartmock.proxy;
 
 import com.davidhallj.smartmock.config.CacheWriteStrategy;
-import com.davidhallj.smartmock.config.ExceptionResolver;
+import com.davidhallj.smartmock.core.ExceptionResolver;
 import com.davidhallj.smartmock.config.ExecutionStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+// TODO replace system.out with logger
 public class CachingInvocationHandler<T> implements InvocationHandler {
 
     // TODO make this a singleton and re-use throughout?
@@ -59,14 +60,12 @@ public class CachingInvocationHandler<T> implements InvocationHandler {
             return null;
         }
 
-
-
-        //List<String> argNames = args == null ? Collections.emptyList() : Arrays.stream(args).map(CachingInvocationHandler::argToString).toList();
         List<String> argNames = Optional.ofNullable(args).map(Arrays::stream).map(CachingInvocationHandler::argToString).stream().toList();
 
         String cacheFileName = String.format("%s%s.json", methodName, argNames.toString());
 
         if (cacheFileExists(cacheFileName) && executionStrategy == ExecutionStrategy.LOCAL_WHEN_AVAILABLE) {
+
             result = readCacheFile(cacheFileName);
 
             if (result == null) {
@@ -81,35 +80,36 @@ public class CachingInvocationHandler<T> implements InvocationHandler {
             try {
                 result = m.invoke(realServiceImpl, args);
             } catch (InvocationTargetException e) {
-                writeCacheFile(cacheFileName, exceptionResolver.buildExceptionChain(e.getTargetException()));
+                if (cacheWriteStrategy == CacheWriteStrategy.ON) {
+                    writeCacheFile(cacheFileName, exceptionResolver.buildExceptionChain(e.getTargetException()));
+                }
                 throw e.getTargetException();
             }
 
-            writeCacheFile(cacheFileName, result == null ? "" : gson.toJson(result));
+            if (cacheWriteStrategy == CacheWriteStrategy.ON) {
+                writeCacheFile(cacheFileName, result == null ? "" : gson.toJson(result));
+            }
 
             return result;
         }
 
     }
 
-
     private void writeCacheFile(String fileName, String content) throws IOException {
         // Check if the cache dir exists at all.
-        if (cacheWriteStrategy == CacheWriteStrategy.ON) {
-            File cacheDir = new File(getCacheRoot());
-            if (!cacheDir.exists()) {
-                System.out.println("Cache does not exist. Creating cache directory");
-                if (!cacheDir.mkdirs()) {
-                    // TODO Better error handling?
-                    throw new RuntimeException("Error creating cache directory");
-                }
+        File cacheDir = new File(getCacheRoot());
+        if (!cacheDir.exists()) {
+            System.out.println("Cache does not exist. Creating cache directory");
+            if (!cacheDir.mkdirs()) {
+                // TODO Better error handling?
+                throw new RuntimeException("Error creating cache directory");
             }
-
-            System.out.println("Write cache file: " + getCacheFile(fileName));
-            PrintWriter writer = new PrintWriter(getCacheFile(fileName), "UTF-8");
-            writer.println(content);
-            writer.close();
         }
+
+        System.out.println("Write cache file: " + getCacheFile(fileName));
+        PrintWriter writer = new PrintWriter(getCacheFile(fileName), "UTF-8");
+        writer.println(content);
+        writer.close();
     }
 
     private String readCacheFile(String fileName) {
