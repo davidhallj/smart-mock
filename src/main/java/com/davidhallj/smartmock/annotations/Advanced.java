@@ -17,6 +17,6 @@ public @interface Advanced {
     
     String cacheDirectoryName() default Defaults.CACHE_DIR;
     
-    String resourcesDirectorPath() default Defaults.TEST_RESOURCES_DIR; // assumes maven
+    String resourcesDirectorPath() default Defaults.TEST_RESOURCES_DIR;
     
 }

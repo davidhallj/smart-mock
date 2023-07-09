@@ -1,49 +1,45 @@
 package com.davidhallj.smartmock.proxy;
 
 import com.davidhallj.smartmock.config.CacheWriteStrategy;
-import com.davidhallj.smartmock.core.ExceptionResolver;
-import com.davidhallj.smartmock.config.ExecutionStrategy;
+import com.davidhallj.smartmock.config.Defaults;
+import com.davidhallj.smartmock.config.SmartMockConfiguration;
+import com.davidhallj.smartmock.util.CacheHelper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.cxf.helpers.FileUtils;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-// TODO replace system.out with logger
-public class CachingInvocationHandler<T> implements InvocationHandler {
+@Slf4j
+@AllArgsConstructor
+public class CachingInvocationHandler2<T> implements InvocationHandler {
 
     // TODO make this a singleton and re-use throughout?
-    private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static Gson gson = new GsonBuilder()
+            //.setPrettyPrinting()
+            .create();
 
-    private T realServiceImpl;
+    private final T realServiceImpl;
+    private final Class<T> clazz;
+    private final SmartMockConfiguration smartMockConfiguration;
+    private final String testMethodName;
+    private final CacheHelper cacheHelper;
 
-    // Extracted from config
-    private ExceptionResolver exceptionResolver;
-    private String testResourcesDir;
-    private String rootCacheDir;
-    private ExecutionStrategy executionStrategy;
-    private CacheWriteStrategy cacheWriteStrategy;
-
-    private Supplier<String> subDirectorySupplier = () -> "myTest";
 
     private int hits = 0;
 
-    public CachingInvocationHandler(T realServiceImpl, ExceptionResolver exceptionResolver, String testResourcesDir, String rootCacheDir, ExecutionStrategy executionStrategy, CacheWriteStrategy cacheWriteStrategy) {
+    public CachingInvocationHandler2(T realServiceImpl, Class<T> clazz, SmartMockConfiguration smartMockConfiguration, String testMethodName) {
         this.realServiceImpl = realServiceImpl;
-        this.exceptionResolver = exceptionResolver;
-        this.testResourcesDir = testResourcesDir;
-        this.rootCacheDir = rootCacheDir;
-        this.executionStrategy = executionStrategy;
-        this.cacheWriteStrategy = cacheWriteStrategy;
+        this.clazz = clazz;
+        this.smartMockConfiguration = smartMockConfiguration;
+        this.testMethodName = testMethodName;
+        cacheHelper = new CacheHelper(smartMockConfiguration.getCacheNamingStrategy(), clazz, smartMockConfiguration.getResourcesDirName(), smartMockConfiguration.getCacheDirName(), testMethodName);
     }
 
     @Override
@@ -55,101 +51,77 @@ public class CachingInvocationHandler<T> implements InvocationHandler {
         String methodName = m.getName();
 
         // This solves an issue where the debugger calls toString() on the Proxy (and so we end up caching the response)
-        // Could also compare against the list of values of the actual method names on the interface
+        // Could also compare against the list of values of the actual method names on the interface so that we're
+        // only intercepting the real methods
         if (m.getName().contains("toString")) {
             return null;
         }
 
-        List<String> argNames = Optional.ofNullable(args).map(Arrays::stream).map(CachingInvocationHandler::argToString).stream().toList();
+        List<String> argNames = Optional.ofNullable(args).map(Arrays::stream).map(CachingInvocationHandler2::argToString).stream().toList();
 
-        String cacheFileName = String.format("%s%s.json", methodName, argNames.toString());
+        final String cacheFileName = String.format("%s%s.json", methodName, argNames.toString());
 
-        if (cacheFileExists(cacheFileName) && executionStrategy == ExecutionStrategy.LOCAL_WHEN_AVAILABLE) {
+        switch (smartMockConfiguration.getRunConfig()) {
+            case SMART_CACHE_MODE -> {
+                log.info("SMART_CACHE_MODE");
 
-            result = readCacheFile(cacheFileName);
+                if (cacheHelper.cacheFileExists(cacheFileName)) {
 
-            if (result == null) {
+                    result = cacheHelper.readCacheFile(cacheFileName);
+
+                    if (result == null) {
+                        return null;
+                    }
+                    return gson.fromJson(result.toString(), m.getReturnType());
+                } else {
+
+                    m = realServiceImpl.getClass().getMethod(methodName, m.getParameterTypes());
+
+                    // If this is called using the real service, result is implicitly of the correct type
+                    try {
+                        result = m.invoke(realServiceImpl, args);
+                    } catch (InvocationTargetException e) {
+                        if (smartMockConfiguration.getRunConfig().getCacheWriteStrategy() == CacheWriteStrategy.ON) {
+                            // TODO inject Exception Resolver logic
+                            cacheHelper.writeCacheFile(cacheFileName, Defaults.EXCEPTION_RESOLVER.buildExceptionChain(e.getTargetException()));
+                        }
+                        throw e.getTargetException();
+                    }
+
+                    if (smartMockConfiguration.getRunConfig().getCacheWriteStrategy() == CacheWriteStrategy.ON) {
+                        cacheHelper.writeCacheFile(cacheFileName, result == null ? "" : gson.toJson(result));
+                    }
+
+                    return result;
+                }
+
+            }
+            case READ_ONLY_MODE -> {
+                log.info("READ_ONLY_MODE");
+                result = cacheHelper.readCacheFile(cacheFileName);
+
+                if (result == null) {
+                    throw new RuntimeException("Running in READ_ONLY mode but the file is not found");
+                }
+
+                return gson.fromJson(result.toString(), m.getReturnType());
+            }
+            case DEV_MODE -> {
+                log.info("DEV_MODE");
+
+                m = realServiceImpl.getClass().getMethod(methodName, m.getParameterTypes());
+                return m.invoke(realServiceImpl, args);
+
+            }
+            default -> {
+                // TODO handle this better
+                log.info("DEFAULT");
                 return null;
             }
-            return gson.fromJson(result.toString(), m.getReturnType());
-        } else {
-
-            m = realServiceImpl.getClass().getMethod(methodName, m.getParameterTypes());
-
-            // If this is called using the real service, result is implicitly of the correct type
-            try {
-                result = m.invoke(realServiceImpl, args);
-            } catch (InvocationTargetException e) {
-                if (cacheWriteStrategy == CacheWriteStrategy.ON) {
-                    writeCacheFile(cacheFileName, exceptionResolver.buildExceptionChain(e.getTargetException()));
-                }
-                throw e.getTargetException();
-            }
-
-            if (cacheWriteStrategy == CacheWriteStrategy.ON) {
-                writeCacheFile(cacheFileName, result == null ? "" : gson.toJson(result));
-            }
-
-            return result;
         }
 
-    }
-
-    private void writeCacheFile(String fileName, String content) throws IOException {
-        // Check if the cache dir exists at all.
-        File cacheDir = new File(getCacheRoot());
-        if (!cacheDir.exists()) {
-            System.out.println("Cache does not exist. Creating cache directory");
-            if (!cacheDir.mkdirs()) {
-                // TODO Better error handling?
-                throw new RuntimeException("Error creating cache directory");
-            }
-        }
-
-        System.out.println("Write cache file: " + getCacheFile(fileName));
-        PrintWriter writer = new PrintWriter(getCacheFile(fileName), "UTF-8");
-        writer.println(content);
-        writer.close();
-    }
-
-    private String readCacheFile(String fileName) {
-        System.out.println("Read cache file: " + getCacheFile(fileName));
-
-        String fileContents = FileUtils.getStringFromFile(getCacheFile(fileName)).trim();
-
-        // Try resolving the fileContents to an error
-        exceptionResolver.handleException(fileContents);
-
-        return fileContents;
 
     }
-
-    private String getTestResourcesRoot() {
-        File resourcesDirectory = new File(testResourcesDir);
-        return resourcesDirectory.getAbsolutePath();
-    }
-
-    private String getCacheRoot() {
-        return String.format("%s/%s", getTestResourcesRoot(), rootCacheDir);
-    }
-
-    private File getCacheFile(String fileName) {
-        return new File(String.format("%s/%s", getCacheRoot(), fileName));
-    }
-
-    private boolean cacheFileExists(String fileName) {
-        File f = getCacheFile(fileName);
-        return f.exists() && !f.isDirectory();
-    }
-
-    // Main question is how to handle changing state... think a REST interface for CRUD...
-    // First get might return null. After posting, the get will now return the posted object.
-    // Then an update, then a delete... etc. In this scenario, we need a unique caching strategy
-    // to capture these state transitions
-
-    // Could go sequentially... timestamps? Simple numbers?
-
-
 
     private static String argToString(Object obj) {
 
@@ -163,4 +135,6 @@ public class CachingInvocationHandler<T> implements InvocationHandler {
         }
 
     }
+
+
 }

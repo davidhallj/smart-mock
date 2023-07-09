@@ -1,9 +1,16 @@
 package com.davidhallj.smartmock.config;
 
+import com.davidhallj.smartmock.config.advanced.CacheReadStrategy;
+import com.davidhallj.smartmock.config.advanced.CacheWriteStrategy;
+import com.davidhallj.smartmock.config.advanced.CachingStrategy;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@Getter
+// TODO : none of the sub enums hold any value -> their meaning has been hoisted up into the top level
+// They can eventually be removed. If a new RunConfig flow is needed, a new top level config will need
+// to be added
+// TODO rename to 'RunStrategy'
+
+//@Getter
 @AllArgsConstructor
 public enum RunConfig {
 
@@ -31,7 +38,7 @@ public enum RunConfig {
             CachingStrategy.STATELESS
     ),
     /**
-     * This mode provides the most safety if you indent to allow SmartMocks during unit test execution
+     * This mode provides the most safety if you intend to allow SmartMocks during unit test execution
      */
     READ_ONLY_MODE(
             CacheWriteStrategy.OFF,
@@ -42,6 +49,7 @@ public enum RunConfig {
     private final CacheWriteStrategy cacheWriteStrategy;
     private final CacheReadStrategy cacheReadStrategy;
     private final CachingStrategy cachingStrategy;
+
     //private final ExceptionResolverStrategy exceptionResolverStrategy;
 
 }

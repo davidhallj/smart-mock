@@ -1,12 +1,9 @@
 package com.davidhallj.smartmock.proxy;
 
-import com.davidhallj.smartmock.config.CacheReadStrategy;
-import com.davidhallj.smartmock.config.CacheWriteStrategy;
 import com.davidhallj.smartmock.config.Defaults;
-import com.davidhallj.smartmock.config.SmartMockConfiguration;
+import com.davidhallj.smartmock.config.SmartMockRunConfiguration;
+import com.davidhallj.smartmock.exception.SmartMockException;
 import com.davidhallj.smartmock.util.CacheHelper;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,32 +14,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-// TODO replace system.out with logger
+import static com.davidhallj.smartmock.core.SmartMockStaticContext.GSON;
 
 @Slf4j
 @AllArgsConstructor
-public class CachingInvocationHandler2<T> implements InvocationHandler {
+public class CachingInvocationHandler implements InvocationHandler {
 
-    // TODO make this a singleton and re-use throughout?
-    private static Gson gson = new GsonBuilder()
-            //.setPrettyPrinting()
-            .create();
-
-    private final T realServiceImpl;
-    private final Class<T> clazz;
-    private final SmartMockConfiguration smartMockConfiguration;
+    private final Object realServiceImpl;
+    private final Class<?> clazz;
+    private final SmartMockRunConfiguration smartMockRunConfiguration;
     private final String testMethodName;
     private final CacheHelper cacheHelper;
-
-
     private int hits = 0;
 
-    public CachingInvocationHandler2(T realServiceImpl, Class<T> clazz, SmartMockConfiguration smartMockConfiguration, String testMethodName) {
+    public CachingInvocationHandler(Object realServiceImpl, Class<?> clazz, SmartMockRunConfiguration smartMockRunConfiguration, String testMethodName) {
         this.realServiceImpl = realServiceImpl;
         this.clazz = clazz;
-        this.smartMockConfiguration = smartMockConfiguration;
+        this.smartMockRunConfiguration = smartMockRunConfiguration;
         this.testMethodName = testMethodName;
-        cacheHelper = new CacheHelper(smartMockConfiguration.getCacheNamingStrategy(), clazz, smartMockConfiguration.getResourcesDirName(), smartMockConfiguration.getCacheDirName(), testMethodName);
+        cacheHelper = new CacheHelper(smartMockRunConfiguration.getCacheNamingStrategy(), clazz, smartMockRunConfiguration.getTestResourceDir(), smartMockRunConfiguration.getCacheDir(), testMethodName);
     }
 
     @Override
@@ -60,44 +50,69 @@ public class CachingInvocationHandler2<T> implements InvocationHandler {
             return null;
         }
 
-        List<String> argNames = Optional.ofNullable(args).map(Arrays::stream).map(CachingInvocationHandler2::argToString).stream().toList();
+        List<String> argNames = Optional.ofNullable(args).map(Arrays::stream).map(CachingInvocationHandler::argToString).stream().toList();
 
         final String cacheFileName = String.format("%s%s.json", methodName, argNames.toString());
 
-        if (cacheHelper.cacheFileExists(cacheFileName) && smartMockConfiguration.getRunConfig().getCacheReadStrategy() == CacheReadStrategy.SMART) {
+        switch (smartMockRunConfiguration.getRunStrategy()) {
+            case SMART_CACHE_MODE -> {
+                log.info("SMART_CACHE_MODE");
 
-            result = cacheHelper.readCacheFile(cacheFileName);
+                if (cacheHelper.cacheFileExists(cacheFileName)) {
 
-            if (result == null) {
-                return null;
-            }
-            return gson.fromJson(result.toString(), m.getReturnType());
-        } else {
+                    result = cacheHelper.readCacheFile(cacheFileName);
 
-            m = realServiceImpl.getClass().getMethod(methodName, m.getParameterTypes());
+                    if (result == null) {
+                        return null;
+                    }
+                    return GSON.fromJson(result.toString(), m.getReturnType());
+                } else {
 
-            // If this is called using the real service, result is implicitly of the correct type
-            try {
-                result = m.invoke(realServiceImpl, args);
-            } catch (InvocationTargetException e) {
-                if (smartMockConfiguration.getRunConfig().getCacheWriteStrategy() == CacheWriteStrategy.ON) {
-                    // TODO inject Exception Resolver logic
-                    cacheHelper.writeCacheFile(cacheFileName, Defaults.EXCEPTION_RESOLVER.buildExceptionChain(e.getTargetException()));
+                    m = realServiceImpl.getClass().getMethod(methodName, m.getParameterTypes());
+
+                    // If this is called using the real service, result is implicitly of the correct type
+                    try {
+                        result = m.invoke(realServiceImpl, args);
+                    } catch (InvocationTargetException e) {
+                        // TODO inject Exception Resolver logic
+                        cacheHelper.writeCacheFile(cacheFileName, Defaults.EXCEPTION_RESOLVER.buildExceptionChain(e.getTargetException()));
+                        throw e.getTargetException();
+                    }
+
+                    cacheHelper.writeCacheFile(cacheFileName, result == null ? "" : GSON.toJson(result));
+
+                    return result;
                 }
-                throw e.getTargetException();
-            }
 
-            if (smartMockConfiguration.getRunConfig().getCacheWriteStrategy() == CacheWriteStrategy.ON) {
-                cacheHelper.writeCacheFile(cacheFileName, result == null ? "" : gson.toJson(result));
             }
+            case READ_ONLY_MODE -> {
+                log.info("READ_ONLY_MODE");
+                result = cacheHelper.readCacheFile(cacheFileName);
 
-            return result;
+                if (result == null) {
+                    throw new SmartMockException(String.format("Running in READ_ONLY mode but the matching cache file [%s] is not found", cacheFileName));
+                }
+
+                return GSON.fromJson(result.toString(), m.getReturnType());
+            }
+            case DEV_MODE -> {
+                log.info("DEV_MODE");
+
+                m = realServiceImpl.getClass().getMethod(methodName, m.getParameterTypes());
+                return m.invoke(realServiceImpl, args);
+
+            }
+            default -> {
+                throw new SmartMockException("Invalid RunConfig");
+            }
         }
+
 
     }
 
     private static String argToString(Object obj) {
 
+        // TODO why not just check if the Clas is of type string itself?
         if (obj.getClass().getTypeName().contains("String")) {
             return obj.toString();
         } else {

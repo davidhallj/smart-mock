@@ -1,37 +1,47 @@
 package com.davidhallj.smartmock.config;
 
-import com.davidhallj.smartmock.SmartMock;
+import com.davidhallj.smartmock.annotations.SmartMock;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.lang.reflect.Field;
+
 @Getter
 @Builder
-public class SmartMockConfiguration {
+public class FullConfigContext {
 
-    /**
-     * Top level SmartMock params
-     */
-    private final String url;
-    private final RunConfig runConfig;
-    /**
-     * Advanced params
-     */
-    private final CacheNamingStrategy cacheNamingStrategy;
-    private final String cacheDirName;
-    private final String resourcesDirName;
+    private final SmartMockRuntimeContext runContext;
+    private final SmartMockTestContext testContext;
+    private final SmartMockConfiguration config;
 
+    public static FullConfigContext create(SmartMock smartMock, Field annotatedField, String testMethodName) {
 
-    public static SmartMockConfiguration create(SmartMock smartMock) {
+        // Validations
 
-        // Validations?
-
-        return SmartMockConfiguration.builder()
+        final SmartMockRuntimeContext smartMockRuntimeContext = SmartMockRuntimeContext.builder()
                 .url(smartMock.url())
-                .runConfig(smartMock.runConfig())
-                .cacheNamingStrategy(smartMock.advanced().cacheNamingStategy())
-                .cacheDirName(smartMock.advanced().cacheDirectoryName())
-                .resourcesDirName(smartMock.advanced().resourcesDirectorPath())
+                .mockType(annotatedField.getType())
                 .build();
+
+        final SmartMockTestContext smartMockTestContext = SmartMockTestContext.builder()
+                .testMethodName(testMethodName)
+                .build();
+
+        final SmartMockConfiguration smartMockConfiguration = SmartMockConfiguration.builder()
+                .runStrategy(smartMock.runConfig())
+                .testResourceDir(smartMock.advanced().resourcesDirectoryPath())
+                .cacheDir(smartMock.advanced().cacheDirectoryName())
+                .cacheNamingStrategy(smartMock.advanced().cacheNamingStrategy())
+                .build();
+
+        return FullConfigContext.builder()
+                .runContext(smartMockRuntimeContext)
+                .testContext(smartMockTestContext)
+                .config(smartMockConfiguration)
+                .build();
+
+
+
     }
 
 
