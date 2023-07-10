@@ -2,12 +2,13 @@ package com.davidhallj.smartmock;
 
 import com.davidhallj.smartmock.annotations.SmartMock;
 import com.davidhallj.smartmock.config.Defaults;
+import com.davidhallj.smartmock.config.RunStrategy;
 import com.davidhallj.smartmock.core.SmartMockStaticContext;
+import com.davidhallj.smartmock.exception.SmartMockException;
 import com.davidhallj.smartmock.jaxrs.Greeting;
 import com.davidhallj.smartmock.jaxrs.HelloResource;
 import com.davidhallj.smartmock.jaxrs.HelloResourceImpl;
 import com.davidhallj.smartmock.junit.SmartMockExtender;
-import com.davidhallj.smartmock.util.SmartMockTestUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cxf.endpoint.Server;
 import org.junit.jupiter.api.AfterAll;
@@ -26,11 +27,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
 @ExtendWith(SmartMockExtender.class)
-public class SmartCacheModeAnnotationTest {
+public class ReadOnlyModeAnnotationTest {
 
     private static final Path CACHE_ROOT = Path.of(Defaults.MAVEN_TEST_RESOURCES, Defaults.CACHE_DIR);
 
-    static final boolean runCleanupAndBaselines = true;
+    @SmartMock(url = "http://0.0.0.0:8181/services/hello", runConfig = RunStrategy.READ_ONLY_MODE)
+    private HelloResource helloResourceReadOnlyMode;
 
     @SmartMock(url = "http://0.0.0.0:8181/services/hello")
     private HelloResource helloResourceSmartCacheMode;
@@ -40,45 +42,68 @@ public class SmartCacheModeAnnotationTest {
         final HelloResourceImpl impl = new HelloResourceImpl();
         final Server server = SmartMockStaticContext.JAXRS_FACTORY.createJaxrsServer(buildServerAddress("hello"), HelloResource.class, impl);
 
+        // Baseline -> no files in cache
+        assertThat(Files.exists(CACHE_ROOT)).isFalse();
 
-        if (runCleanupAndBaselines) {
-            // Baseline -> no files in cache
-            //assertThat(CACHE_ROOT.toFile().listFiles()).isEmpty();
-            assertThat(Files.exists(CACHE_ROOT)).isFalse();
-        }
 
     }
 
     @AfterAll
     public static void classTeardown() {
-        if (runCleanupAndBaselines) {
-            SmartMockTestUtil.deleteDirectory(CACHE_ROOT);
-        }
+        //SmartMockTestUtil.deleteDirectory(CACHE_ROOT);
+        //assertThat(Files.exists(CACHE_ROOT)).isFalse();
     }
 
     @Test
     void run() {
-        final Greeting greeting1 = helloResourceSmartCacheMode.greet();
-        final Greeting greeting2 = helloResourceSmartCacheMode.greet();
-        final Greeting greeting3 = helloResourceSmartCacheMode.greet();
 
-        assertThat(greeting1.getId()).isEqualTo(1);
-        assertThat(greeting2.getId()).isEqualTo(greeting1.getId());
-        assertThat(greeting3.getId()).isEqualTo(greeting2.getId());
+        assertThrows(SmartMockException.class, () -> {
+            helloResourceReadOnlyMode.greet();
+        });
+
+        // Setup.. run using smartCache mode to ensure the cache is populated
+        final Greeting baselineGreeting = helloResourceSmartCacheMode.greet();
+
+
+        final Greeting greeting1 = helloResourceReadOnlyMode.greet();
+        final Greeting greeting2 = helloResourceReadOnlyMode.greet();
+        final Greeting greeting3 = helloResourceReadOnlyMode.greet();
+
+        assertThat(greeting1.getId()).isEqualTo(baselineGreeting.getId());
+        assertThat(greeting2.getId()).isEqualTo(baselineGreeting.getId());
+        assertThat(greeting3.getId()).isEqualTo(baselineGreeting.getId());
 
     }
 
     @Test
     void willThrowServerErrorException() {
+
+        assertThrows(SmartMockException.class, () -> {
+            helloResourceReadOnlyMode.willThrowServerErrorException();
+        });
+
         assertThrows(InternalServerErrorException.class, () -> {
             helloResourceSmartCacheMode.willThrowServerErrorException();
+        });
+
+        assertThrows(InternalServerErrorException.class, () -> {
+            helloResourceReadOnlyMode.willThrowServerErrorException();
         });
     }
 
     @Test
     void willThrowBadRequestException() {
+
+        assertThrows(SmartMockException.class, () -> {
+            helloResourceReadOnlyMode.willThrowBadRequestException();
+        });
+
         assertThrows(BadRequestException.class, () -> {
             helloResourceSmartCacheMode.willThrowBadRequestException();
+        });
+
+        assertThrows(BadRequestException.class, () -> {
+            helloResourceReadOnlyMode.willThrowBadRequestException();
         });
     }
 

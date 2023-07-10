@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.cxf.endpoint.Server;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -29,11 +28,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(SmartMockExtender.class)
 public class DevModeAnnotationTest {
 
-
     private static final Path CACHE_ROOT = Path.of(Defaults.MAVEN_TEST_RESOURCES, Defaults.CACHE_DIR);
 
     @SmartMock(url = "http://0.0.0.0:8181/services/hello", runConfig = RunStrategy.DEV_MODE)
-    private HelloResource helloResourceSmartCacheMode;
+    private HelloResource helloResourceDevMode;
 
     @BeforeAll
     public static void classSetup() {
@@ -52,9 +50,9 @@ public class DevModeAnnotationTest {
 
     @Test
     void run() {
-        final Greeting greeting1 = helloResourceSmartCacheMode.greet();
-        final Greeting greeting2 = helloResourceSmartCacheMode.greet();
-        final Greeting greeting3 = helloResourceSmartCacheMode.greet();
+        final Greeting greeting1 = helloResourceDevMode.greet();
+        final Greeting greeting2 = helloResourceDevMode.greet();
+        final Greeting greeting3 = helloResourceDevMode.greet();
 
         assertThat(greeting1.getId()).isEqualTo(1);
         assertThat(greeting2.getId()).isEqualTo(2);
@@ -63,18 +61,16 @@ public class DevModeAnnotationTest {
     }
 
     @Test
-    @Disabled
     void willThrowServerErrorException() {
         assertThrows(InternalServerErrorException.class, () -> {
-            helloResourceSmartCacheMode.willThrowServerErrorException();
+            helloResourceDevMode.willThrowServerErrorException();
         });
     }
 
     @Test
-    @Disabled
     void willThrowBadRequestException() {
         assertThrows(BadRequestException.class, () -> {
-            helloResourceSmartCacheMode.willThrowBadRequestException();
+            helloResourceDevMode.willThrowBadRequestException();
         });
     }
 

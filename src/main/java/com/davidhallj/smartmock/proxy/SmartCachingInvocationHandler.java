@@ -65,11 +65,12 @@ public class SmartCachingInvocationHandler implements InvocationHandler {
 
                     result = smartCache.readCacheFile(cacheFileName);
 
-                    exceptionResolver.handleException((String) result);
-
                     if (result == null) {
-                        return null;
+                        log.debug("An empty cache file was found");
+                        throw new SmartMockException(String.format("An empty cache file was found for [%s]", cacheFileName));
                     }
+
+                    exceptionResolver.handleException((String) result);
 
                     return gson.fromJson(result.toString(), m.getReturnType());
                 } else {
@@ -99,13 +100,20 @@ public class SmartCachingInvocationHandler implements InvocationHandler {
                     throw new SmartMockException(String.format("Running in READ_ONLY mode but the matching cache file [%s] is not found", cacheFileName));
                 }
 
+                exceptionResolver.handleException((String) result);
+
                 return gson.fromJson(result.toString(), m.getReturnType());
             }
             case DEV_MODE -> {
                 log.debug("DEV_MODE");
 
                 m = realServiceImpl.getClass().getMethod(methodName, m.getParameterTypes());
-                return m.invoke(realServiceImpl, args);
+
+                try {
+                    return m.invoke(realServiceImpl, args);
+                } catch (InvocationTargetException e) {
+                    throw e.getTargetException();
+                }
 
             }
             default -> {
