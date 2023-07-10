@@ -2,21 +2,15 @@ package com.davidhallj.smartmock.config;
 
 import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
 import com.davidhallj.smartmock.core.SmartMockStaticContext;
+import com.davidhallj.smartmock.exceptionmapping.ExceptionResolver;
 import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
 import com.google.gson.Gson;
 import lombok.Builder;
 import lombok.Getter;
 
-
-/**
- * TODO allow for extending the builder pattern with 'testMethodName', or 'TestInfo' objects
- */
 @Getter
 @Builder
-public class SmartMockConfiguration {
-
-    //private final SmartMockRuntimeContext runContext;
-    //private final SmartMockTestContext testContext;
+public class SmartMockRunConfiguration {
 
     /**
      * Top level SmartMock params
@@ -40,40 +34,9 @@ public class SmartMockConfiguration {
     @Builder.Default
     private final Gson gson = SmartMockStaticContext.GSON;
 
-
-    //// If you instantiate this way, you can only use flow 2) with the factory where you provide more context
-    //public static SmartMockConfiguration create(SmartMock smartMock) {
-    //
-    //    return SmartMockConfiguration.builder()
-    //            .runStrategy(smartMock.runConfig())
-    //            .testResourceDir(smartMock.advanced().resourcesDirectoryPath())
-    //            .cacheDir(smartMock.advanced().cacheDirectoryName())
-    //            .cacheNamingStrategy(smartMock.advanced().cacheNamingStrategy())
-    //            .build();
-    //
-    //}
-
-    //
-    //public static SmartMockConfiguration create(SmartMock smartMock, Field annotatedField, String testMethodName) {
-    //
-    //    final SmartMockRuntimeContext smartMockRuntimeContext = SmartMockRuntimeContext.builder()
-    //            .url(smartMock.url())
-    //            .mockType(annotatedField.getType())
-    //            .build();
-    //
-    //    final SmartMockTestContext smartMockTestContext = SmartMockTestContext.builder()
-    //            .testMethodName(testMethodName)
-    //            .build();
-    //
-    //    return SmartMockConfiguration.builder()
-    //            .runContext(smartMockRuntimeContext)
-    //            .testContext(smartMockTestContext)
-    //            .runStrategy(smartMock.runConfig())
-    //            .testResourceDir(smartMock.advanced().resourcesDirectoryPath())
-    //            .cacheDir(smartMock.advanced().cacheDirectoryName())
-    //            .cacheNamingStrategy(smartMock.advanced().cacheNamingStrategy())
-    //            .build();
-    //}
-
+    @Builder.Default
+    private final boolean cacheExceptions = true;
+    @Builder.Default
+    private final ExceptionResolver exceptionResolver = Defaults.WEB_EXCEPTION_RESOLVER;
 
 }

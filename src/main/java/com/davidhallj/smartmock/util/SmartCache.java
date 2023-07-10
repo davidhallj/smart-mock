@@ -1,82 +1,102 @@
 package com.davidhallj.smartmock.util;
 
+import com.davidhallj.smartmock.config.SmartMockConfiguration;
 import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
 import com.davidhallj.smartmock.exception.SmartMockException;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Optional;
 
 @Slf4j
-public class CacheHelper2 implements ICacheHelper {
+public class SmartCache {
 
     private final Path cacheRoot;
 
-    public CacheHelper2(CacheNamingStrategy cacheNamingStrategy, Class<?> mockType, String baseResourcesDirectory, String cacheDirectoryName, String methodName) {
-
-        File resourcesDirectory = new File(baseDirectory);
-        final String cacheBaseDirectory = String.format("%s/%s", resourcesDirectory.getAbsolutePath(), cacheDirectoryName);
-        final String cacheDirectoryLocation = resolveCacheDirectory(cacheNamingStrategy, mockType, cacheBaseDirectory, methodName);
-
-
-        this.cacheRoot = resolveCachePath(cacheNamingStrategy, mockType, cacheBaseDirectory, methodName);
+    public SmartCache(SmartMockConfiguration config) {
+        this.cacheRoot = resolveCachePath(config, config.getProxyContext().getMockType(), config.getTestContext().getTestMethodName());
     }
 
-    @Override
-    public void writeCacheFile(String fileName, String content) {
+    public void writeCacheFile(String fileName, String content) throws IOException {
 
+        createCacheDirIfEmpty();
+
+        final Path cacheFilePath = cacheRoot.resolve(fileName);
+
+        log.info("Write cache file: {}", cacheFilePath);
+
+        Files.writeString(
+                cacheFilePath,
+                content,
+                StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
+        );
     }
 
-    @Override
-    public String readCacheFile(String fileName) {
-        return null;
-    }
+    public String readCacheFile(String fileName) throws IOException {
+        Path cacheFilePath = cacheRoot.resolve(fileName);
 
-    @Override
-    public boolean cacheFileExists(String fileName) {
-        return false;
-    }
+        log.info("Read cache file: {}", cacheFilePath);
 
-    private String resolveCacheDirectory(CacheNamingStrategy cacheNamingStrategy, Class<?> mockType, String cacheDirectory, String methodName) {
+        try {
 
-        switch (cacheNamingStrategy) {
-            case METHOD_SCOPED:
+            String fileContents = Files.readString(cacheFilePath);
 
-                if (methodName == null) {
-                    throw new SmartMockException("When using CacheNamingStrategy of METHOD_SCOPED, the test must be run using the SmartMockJunitRunner or extend SmartMockTestBase");
-                }
+            // TODO implement error handling
+            // Should error handling be in the ache layer or up in the SmartCacheInvocationHandler?
+            // Try resolving the fileContents to an error
+            //exceptionResolver.handleException(fileContents);
 
-                return String.format("%s/%s", cacheDirectory, methodName);
-            case MOCK_SCOPED:
-                return String.format("%s/%s", cacheDirectory, mockType.getSimpleName());
-            case STATIC_SCOPED:
-                return cacheDirectory;
-            case TEST_SUITE_SCOPED:
-                throw new UnsupportedOperationException("CacheNamingStrategy of TEST_SUITE_SCOPED is not yet implemented");
-            default:
-                return cacheDirectory;
+            return fileContents;
+
+        } catch (Exception e) {
+            return null;
         }
 
     }
 
-    private Path resolveCachePath(CacheNamingStrategy cacheNamingStrategy, Class<?> mockType, String baseResourcesDirectory, String methodName) {
+    public boolean cacheFileExists(String fileName) {
+        final Path cacheFilePath = cacheRoot.resolve(fileName);
+        return Files.exists(cacheFilePath) && !Files.isDirectory(cacheFilePath);
+    }
+
+    private void createCacheDirIfEmpty() {
+        if (!Files.exists(cacheRoot)) {
+            log.info("Cache does not exist. Creating cache directory");
+            if (!cacheRoot.toFile().mkdirs()) {
+                throw new SmartMockException("Error creating cache directory");
+            }
+        }
+    }
+
+
+    private static Path resolveCachePath(SmartMockConfiguration smartMockConfiguration, Class<?> mockType, Optional<String> testMethodName) {
+
+        final CacheNamingStrategy cacheNamingStrategy = smartMockConfiguration.getRunConfig().getCacheNamingStrategy();
+
+        final String baseResourcesDirectory = smartMockConfiguration.getRunConfig().getTestResourceDir();
 
         switch (cacheNamingStrategy) {
             case METHOD_SCOPED:
 
-                if (methodName == null) {
+                if (testMethodName.isEmpty()) {
                     throw new SmartMockException("When using CacheNamingStrategy of METHOD_SCOPED, the test must be run using the SmartMockJunitRunner or extend SmartMockTestBase");
                 }
 
-                return Path.of(baseResourcesDirectory, methodName);
+                return Path.of(baseResourcesDirectory, smartMockConfiguration.getRunConfig().getCacheDir(), testMethodName.get());
             case MOCK_SCOPED:
-                return Path.of(baseResourcesDirectory, mockType.getSimpleName());
+                return Path.of(baseResourcesDirectory, smartMockConfiguration.getRunConfig().getCacheDir(), mockType.getSimpleName());
             case STATIC_SCOPED:
-                return Path.of(baseResourcesDirectory);
+                return Path.of(baseResourcesDirectory, smartMockConfiguration.getRunConfig().getCacheDir());
             case TEST_SUITE_SCOPED:
                 throw new UnsupportedOperationException("CacheNamingStrategy of TEST_SUITE_SCOPED is not yet implemented");
             default:
-                return Path.of(baseResourcesDirectory);
+                return Path.of(baseResourcesDirectory, smartMockConfiguration.getRunConfig().getCacheDir());
         }
 
     }

@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.core;
+package com.davidhallj.smartmock.exceptionmapping;
 
 import java.util.List;
 import java.util.Optional;

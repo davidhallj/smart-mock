@@ -1,5 +1,9 @@
 com/davidhallj/smartmock/SmartMockTest.class
-com/davidhallj/smartmock/SmartMockTest$Greeting.class
-com/davidhallj/smartmock/SmartMockTest$HelloResourceImpl.class
-com/davidhallj/smartmock/SmartMockTest$Greeting$GreetingBuilder.class
-com/davidhallj/smartmock/SmartMockTest$HelloResource.class
+com/davidhallj/smartmock/jaxrs/Greeting.class
+com/davidhallj/smartmock/jaxrs/HelloResourceImpl.class
+com/davidhallj/smartmock/jaxrs/Greeting$GreetingBuilder.class
+com/davidhallj/smartmock/config/SmartMockTestContextTest.class
+com/davidhallj/smartmock/util/SmartMockTestUtil.class
+com/davidhallj/smartmock/SmartMockAnnotationTest.class
+com/davidhallj/smartmock/jaxrs/JaxrsTestUtils.class
+com/davidhallj/smartmock/jaxrs/HelloResource.class

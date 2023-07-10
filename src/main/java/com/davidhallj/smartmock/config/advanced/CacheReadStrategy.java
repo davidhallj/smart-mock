@@ -1,15 +1,15 @@
-package com.davidhallj.smartmock.config;
+package com.davidhallj.smartmock.config.advanced;
 
 public enum CacheReadStrategy {
     /**
      * Will never attempt to read from cache
      */
-    OFF, // ALWAYS_USE_REMOVE
+    OFF,
     /**
      * If cache data is there, it will attempt to read it. If no cache data is found, execution will be
      * allowed to continue and
      */
-    SMART, // SMART ?
+    SMART,
     /**
      * If no cache data is found, will stop test execution and throw Exception
      */

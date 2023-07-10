@@ -1,18 +1,14 @@
-package com.davidhallj.smartmock;
+package com.davidhallj.smartmock.core;
 
+import com.davidhallj.smartmock.annotations.SmartMock;
 import com.davidhallj.smartmock.config.SmartMockConfiguration;
 import com.davidhallj.smartmock.exception.SmartMockException;
-import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
-import com.davidhallj.smartmock.jaxrs.JaxrsFactoryImpl;
 import com.davidhallj.smartmock.util.ReflectionHelper;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 public class SmartMockAnnotationsProcessor {
-
-    // TODO Singleton? Where should this live?
-    private static final JaxrsFactory JAXRS_FACTORY = new JaxrsFactoryImpl();
 
     public void process(Class<?> clazz, Object testInstance, String junitTestMethodName) {
 
@@ -43,11 +39,11 @@ public class SmartMockAnnotationsProcessor {
 
     public static Object buildMockFromAnnotation(SmartMock smartMock, Field annotatedField, String junitTestMethodName) {
 
-        final SmartMockConfiguration config = SmartMockConfiguration.create(smartMock);
+        final SmartMockConfiguration config = SmartMockConfiguration.create(smartMock, annotatedField, junitTestMethodName);
 
-        final SmartMockFactory smartMockFactory = new SmartMockFactory(JAXRS_FACTORY, config);
+        final SmartMockFactory.StaticSmartMockFactory smartMockFactory = SmartMockFactoryBuilder.init(config);
 
-        return smartMockFactory.createSmartMock(smartMock.url(), annotatedField.getType(), junitTestMethodName);
+        return smartMockFactory.createSmartMock();
 
     }
 

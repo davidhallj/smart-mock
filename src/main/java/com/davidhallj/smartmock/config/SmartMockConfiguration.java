@@ -8,17 +8,17 @@ import java.lang.reflect.Field;
 
 @Getter
 @Builder
-public class FullConfigContext {
+public class SmartMockConfiguration {
 
-    private final SmartMockRuntimeContext runContext;
+    private final SmartMockRunConfiguration runConfig;
+    private final SmartMockProxyContext proxyContext;
     private final SmartMockTestContext testContext;
-    private final SmartMockConfiguration config;
 
-    public static FullConfigContext create(SmartMock smartMock, Field annotatedField, String testMethodName) {
+    public static SmartMockConfiguration create(SmartMock smartMock, Field annotatedField, String testMethodName) {
 
-        // Validations
+        // TODO Validations
 
-        final SmartMockRuntimeContext smartMockRuntimeContext = SmartMockRuntimeContext.builder()
+        final SmartMockProxyContext smartMockProxyContext = SmartMockProxyContext.builder()
                 .url(smartMock.url())
                 .mockType(annotatedField.getType())
                 .build();
@@ -27,17 +27,17 @@ public class FullConfigContext {
                 .testMethodName(testMethodName)
                 .build();
 
-        final SmartMockConfiguration smartMockConfiguration = SmartMockConfiguration.builder()
+        final SmartMockRunConfiguration smartMockRunConfiguration = SmartMockRunConfiguration.builder()
                 .runStrategy(smartMock.runConfig())
                 .testResourceDir(smartMock.advanced().resourcesDirectoryPath())
                 .cacheDir(smartMock.advanced().cacheDirectoryName())
                 .cacheNamingStrategy(smartMock.advanced().cacheNamingStrategy())
                 .build();
 
-        return FullConfigContext.builder()
-                .runContext(smartMockRuntimeContext)
+        return SmartMockConfiguration.builder()
+                .runConfig(smartMockRunConfiguration)
+                .proxyContext(smartMockProxyContext)
                 .testContext(smartMockTestContext)
-                .config(smartMockConfiguration)
                 .build();
 
 

@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.config;
+package com.davidhallj.smartmock.config.advanced;
 
 public enum CacheWriteStrategy {
     ON,

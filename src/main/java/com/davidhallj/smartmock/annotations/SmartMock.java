@@ -1,6 +1,6 @@
-package com.davidhallj.smartmock;
+package com.davidhallj.smartmock.annotations;
 
-import com.davidhallj.smartmock.config.RunConfig;
+import com.davidhallj.smartmock.config.RunStrategy;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -14,7 +14,7 @@ public @interface SmartMock {
 
     String url();
 
-    RunConfig runConfig() default RunConfig.SMART_CACHE_MODE;
+    RunStrategy runConfig() default RunStrategy.SMART_CACHE_MODE;
 
     Advanced advanced() default @Advanced;
 

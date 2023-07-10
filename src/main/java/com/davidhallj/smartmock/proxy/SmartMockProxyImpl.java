@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-// This is not the
 public class SmartMockProxyImpl<T> implements InvocationHandler {
 
     private final InvocationHandler invocationHandler;

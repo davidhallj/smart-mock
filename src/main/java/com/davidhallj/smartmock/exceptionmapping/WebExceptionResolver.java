@@ -1,6 +1,7 @@
-package com.davidhallj.smartmock.core;
+package com.davidhallj.smartmock.exceptionmapping;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ServerErrorException;
 import java.util.Arrays;
@@ -24,7 +25,7 @@ public class WebExceptionResolver extends BaseExceptionResolver {
 
     public WebExceptionResolver() {
         exceptionMappings = getExceptionMappings().stream().collect(Collectors.toMap(
-                exceptionMapping -> resolveExceptionName(exceptionMapping.getCls()) ,Function.identity()));
+                exceptionMapping -> resolveExceptionName(exceptionMapping.getCls()), Function.identity()));
         exceptionNames = getExceptionMappings().stream().map(exceptionMapping -> resolveExceptionName(exceptionMapping.getCls())).collect(Collectors.toList());
     }
 
@@ -33,7 +34,8 @@ public class WebExceptionResolver extends BaseExceptionResolver {
         return Arrays.asList(
                 new ExceptionMapping<>(BadRequestException.class, BadRequestException::new, BadRequestException::new),
                 new ExceptionMapping<>(NotFoundException.class, NotFoundException::new, NotFoundException::new),
-                new ExceptionMapping<>(ServerErrorException.class, () -> new ServerErrorException(500), runtimeException -> new ServerErrorException("", 500, runtimeException) )
+                new ExceptionMapping<>(ServerErrorException.class, () -> new ServerErrorException(500), runtimeException -> new ServerErrorException("", 500, runtimeException)),
+                new ExceptionMapping<>(InternalServerErrorException.class, InternalServerErrorException::new, runtimeException -> new InternalServerErrorException("", runtimeException))
         );
     }
 
@@ -60,7 +62,7 @@ public class WebExceptionResolver extends BaseExceptionResolver {
     public String buildExceptionChain(Throwable e) {
         String s =  resolveExceptionName(e.getClass());
         if (e.getCause() != null) {
-            s += " " +buildExceptionChain(e.getCause());
+            s += " " + buildExceptionChain(e.getCause());
         }
         return s;
     }

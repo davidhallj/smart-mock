@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock;
+package com.davidhallj.smartmock.core;
 
 import com.davidhallj.smartmock.exception.SmartMockException;
 import lombok.AccessLevel;

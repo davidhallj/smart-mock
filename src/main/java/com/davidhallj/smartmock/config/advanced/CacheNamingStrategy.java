@@ -1,12 +1,12 @@
-package com.davidhallj.smartmock.config;
+package com.davidhallj.smartmock.config.advanced;
 
 public enum CacheNamingStrategy {
     /**
      * Each test method will create its own sub directory in the main cache,
      * named after itself.
      *
-     * TOOD review this note
-     * Note: requires a hook into the junit framework in order to recieve the current
+     * TODO review this note
+     * Note: requires a hook into the junit framework in order to receive the current
      * executing test method name. Must run the test class with the SmartMockJunitRunner,
      * or extend from the SmartMockTestBase
      *

@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.core;
+package com.davidhallj.smartmock.exceptionmapping;
 
 public interface ExceptionResolver {
 

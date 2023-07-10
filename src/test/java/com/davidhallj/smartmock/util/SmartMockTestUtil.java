@@ -1,10 +1,15 @@
-package com.davidhallj.smartmock;
+package com.davidhallj.smartmock.util;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public class SmartMockTestUtil {
 
-    static boolean deleteDirectory(File directoryToBeDeleted) {
+    public static boolean deleteDirectory(Path directoryToBeDeleted) {
+        return deleteDirectory(directoryToBeDeleted.toFile());
+    }
+
+    public static boolean deleteDirectory(File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
@@ -13,5 +18,7 @@ public class SmartMockTestUtil {
         }
         return directoryToBeDeleted.delete();
     }
+
+
 
 }

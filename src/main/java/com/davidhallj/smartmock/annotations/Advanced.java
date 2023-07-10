@@ -1,7 +1,7 @@
-package com.davidhallj.smartmock;
+package com.davidhallj.smartmock.annotations;
 
-import com.davidhallj.smartmock.config.CacheNamingStrategy;
 import com.davidhallj.smartmock.config.Defaults;
+import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -13,10 +13,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface Advanced {
 
-    CacheNamingStrategy cacheNamingStategy() default CacheNamingStrategy.METHOD_SCOPED;
-    
+    String resourcesDirectoryPath() default Defaults.MAVEN_TEST_RESOURCES;
+
     String cacheDirectoryName() default Defaults.CACHE_DIR;
-    
-    String resourcesDirectorPath() default Defaults.TEST_RESOURCES_DIR;
-    
+
+    CacheNamingStrategy cacheNamingStrategy() default CacheNamingStrategy.METHOD_SCOPED;
+
 }

@@ -8,11 +8,10 @@ import lombok.AllArgsConstructor;
 // TODO : none of the sub enums hold any value -> their meaning has been hoisted up into the top level
 // They can eventually be removed. If a new RunConfig flow is needed, a new top level config will need
 // to be added
-// TODO rename to 'RunStrategy'
 
 //@Getter
 @AllArgsConstructor
-public enum RunConfig {
+public enum RunStrategy {
 
     /**
      * Intended only for use during development. Will always call the live remove service, and never read from

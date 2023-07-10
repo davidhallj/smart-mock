@@ -7,9 +7,9 @@ import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class SmartMockRunContext {
+public class SmartMockStaticContext {
 
-    private SmartMockRunContext() {
+    private SmartMockStaticContext() {
         log.info("SmartMockRunContext constructor");
     }
 

@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.config;
+package com.davidhallj.smartmock.config.advanced;
 
 // TODO implement this
 public enum CachingStrategy {

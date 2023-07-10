@@ -1,122 +1,267 @@
 package com.davidhallj.smartmock;
 
-import com.davidhallj.smartmock.config.RunConfig;
-import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
-import com.davidhallj.smartmock.jaxrs.JaxrsFactoryImpl;
-import com.davidhallj.smartmock.junit.SmartMockExtender;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import com.davidhallj.smartmock.config.Defaults;
+import com.davidhallj.smartmock.config.RunStrategy;
+import com.davidhallj.smartmock.config.SmartMockRunConfiguration;
+import com.davidhallj.smartmock.config.SmartMockProxyContext;
+import com.davidhallj.smartmock.config.SmartMockTestContext;
+import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
+import com.davidhallj.smartmock.core.SmartMockFactory;
+import com.davidhallj.smartmock.core.SmartMockFactoryBuilder;
+import com.davidhallj.smartmock.core.SmartMockStaticContext;
+import com.davidhallj.smartmock.exception.SmartMockException;
+import com.davidhallj.smartmock.jaxrs.Greeting;
+import com.davidhallj.smartmock.jaxrs.HelloResource;
+import com.davidhallj.smartmock.jaxrs.HelloResourceImpl;
+import com.davidhallj.smartmock.util.SmartMockTestUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.cxf.endpoint.Server;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.TestInfo;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.MediaType;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static com.davidhallj.smartmock.jaxrs.JaxrsTestUtils.buildServerAddress;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@ExtendWith(SmartMockExtender.class)
+@Slf4j
+//@ExtendWith(SmartMockExtender.class)
 public class SmartMockTest {
 
-    private static JaxrsFactory jaxrsFactory;
-
-    //@SmartMock(url = "http://0.0.0.0:8181/services/hello", executionStrategy = ExecutionStrategy.ALWAYS_USE_REMOTE, cacheWriteStrategy = CacheWriteStrategy.OFF,
-    //        advanced = @Advanced(
-    //                cacheNamingStategy = CacheNamingStrategy.METHOD_SCOPED
-    //))
-    //private HelloResource helloResource;
-
-
-    @SmartMock(url = "http://0.0.0.0:8181/services/hello", runConfig = RunConfig.READ_ONLY_MODE
-            //advanced = @Advanced(
-            //        cacheNamingStategy = CacheNamingStrategy.METHOD_SCOPED
-            //)
-    )
-    private HelloResource helloResource;
-
+    private static final String TEST_CACHE_DIR = "smartmock-test-cache";
+    private static final String READONLY_CACHE_DIR = "readonly-test-cache";
 
     @BeforeAll
     public static void classSetup() {
-        jaxrsFactory = new JaxrsFactoryImpl();
         final HelloResourceImpl impl = new HelloResourceImpl();
-        final Server server = jaxrsFactory.createJaxrsServer(buildServerAddress("hello"), HelloResource.class, impl);
+        final Server server = SmartMockStaticContext.JAXRS_FACTORY.createJaxrsServer(buildServerAddress("hello"), HelloResource.class, impl);
+    }
+
+    @AfterAll
+    public static void classTeardown() {
+        SmartMockTestUtil.deleteDirectory(Paths.get(Defaults.MAVEN_TEST_RESOURCES, TEST_CACHE_DIR).toFile());
     }
 
     @Test
-    public void createServer() {
+    void smartCacheMode_happyPath(TestInfo testInfo) {
 
-        Greeting greeting = helloResource.greet();
+        SmartMockRunConfiguration config = SmartMockRunConfiguration.builder()
+                .runStrategy(RunStrategy.SMART_CACHE_MODE)
+                .testResourceDir(Defaults.MAVEN_TEST_RESOURCES)
+                .cacheDir(TEST_CACHE_DIR)
+                .cacheNamingStrategy(Defaults.CACHE_NAMING_STRATEGY)
+                .build();
 
-        assertNotNull(greeting);
+        SmartMockFactory.BaseSmartMockFactory smartMockFactory = SmartMockFactoryBuilder.init(config);
 
-        assertEquals("Hello world!", greeting.getGreeting());
+        // Baseline -> no files in cache
+        final String testMethodName = testInfo.getTestMethod().get().getName();
+        final Path expectedCacheDirectory = Paths.get(Defaults.MAVEN_TEST_RESOURCES, TEST_CACHE_DIR, testMethodName);
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
+
+        //final HelloResource helloResource = smartMockFactory.createSmartMock(HelloResource.url, HelloResource.class, testMethodName);
+
+        final HelloResource helloResource = (HelloResource) smartMockFactory.createSmartMock(
+                SmartMockProxyContext.builder()
+                        .url(HelloResource.url)
+                        .mockType(HelloResource.class)
+                        .build(),
+                SmartMockTestContext.builder()
+                        .testMethodName(testMethodName)
+                        .build()
+        );
+
+
+        final Greeting greeting1 = helloResource.greet();
+
+        assertThat(greeting1).isNotNull();
+        assertThat(greeting1.getGreeting()).isEqualTo("Hello world!");
+
+        assertThat(greeting1.getId()).isNotNull();
+
+        // Cache directory was created
+        assertThat(Files.exists(expectedCacheDirectory)).isTrue();
+
+        final Greeting greeting2 = helloResource.greet();
+
+        assertThat(greeting2).isNotNull();
+        assertThat(greeting2.getGreeting()).isEqualTo("Hello world!");
+        // This check ensures that the live service was not called, and that the cached object was returned
+        assertThat(greeting2.getId()).isEqualTo(greeting1.getId());
+
+        // Ensure that it is not caching the objects in any way.. new objects are created from same data cache
+        assertThat(greeting1).isNotEqualTo(greeting2);
 
         helloResource.greet();
         helloResource.greet();
+
+        // Cache directory still exists
+        assertThat(Files.exists(expectedCacheDirectory)).isTrue();
+
+        SmartMockTestUtil.deleteDirectory(expectedCacheDirectory.toFile());
+        //SmartMockTestUtil.deleteDirectory(Paths.get(Defaults.TEST_RESOURCES_DIR, TEST_CACHE_DIR).toFile());
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
+
+    }
+
+
+    @Test
+    void devMode_happyPath(TestInfo testInfo) {
+
+        SmartMockRunConfiguration config = SmartMockRunConfiguration.builder()
+                .runStrategy(RunStrategy.DEV_MODE)
+                .testResourceDir(Defaults.MAVEN_TEST_RESOURCES)
+                .cacheDir(Defaults.CACHE_DIR)
+                .cacheNamingStrategy(Defaults.CACHE_NAMING_STRATEGY)
+                .build();
+
+        SmartMockFactory.BaseSmartMockFactory smartMockFactory = SmartMockFactoryBuilder.init(config);
+
+        // Baseline -> no files in cache
+        final String expectedCacheDirectoryName = testInfo.getTestMethod().get().getName();
+        final Path expectedCacheDirectory = Paths.get(Defaults.MAVEN_TEST_RESOURCES, Defaults.CACHE_DIR, expectedCacheDirectoryName);
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
+
+        final HelloResource helloResource = smartMockFactory.createSmartMock(HelloResource.url, HelloResource.class, expectedCacheDirectoryName);
+
+        final Greeting greeting1 = helloResource.greet();
+
+        assertThat(greeting1).isNotNull();
+        assertThat(greeting1.getGreeting()).isEqualTo("Hello world!");
+        assertThat(greeting1.getId()).isEqualTo(1);
+
+        // Cache directory was not created
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
+
+        final Greeting greeting2 = helloResource.greet();
+
+        assertThat(greeting2).isNotNull();
+        assertThat(greeting2.getGreeting()).isEqualTo("Hello world!");
+        // This check verifies that the live service was called, because the ID increments
+        assertThat(greeting2.getId()).isEqualTo(2);
+
+        // Ensure that it is not caching the objects in any way.. new objects are created from same data cache
+        assertThat(greeting1).isNotEqualTo(greeting2);
+
         helloResource.greet();
         helloResource.greet();
 
-    }
+        // Cache directory still exists
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
 
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public interface HelloResource {
-
-        @GET
-        @Path("greet")
-        Greeting greet();
-
-        @GET
-        @Path("willThrow")
-        void willThrow();
+        SmartMockTestUtil.deleteDirectory(expectedCacheDirectory.toFile());
+        //SmartMockTestUtil.deleteDirectory(Paths.get(Defaults.TEST_RESOURCES_DIR, TEST_CACHE_DIR).toFile());
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
 
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static final class Greeting {
 
-        private final String id;
-        private final String greeting;
+    @Test
+    void readOnlyMode_happyPath(TestInfo testInfo) {
+
+        SmartMockRunConfiguration config = SmartMockRunConfiguration.builder()
+                .runStrategy(RunStrategy.SMART_CACHE_MODE)
+                .testResourceDir(Defaults.MAVEN_TEST_RESOURCES)
+                .cacheDir(READONLY_CACHE_DIR)
+                .cacheNamingStrategy(CacheNamingStrategy.STATIC_SCOPED)
+                .build();
+
+        SmartMockFactory.BaseSmartMockFactory smartMockFactory = SmartMockFactoryBuilder.init(config);
+
+        // Baseline -> no files in cache
+        final String testMethodName = testInfo.getTestMethod().get().getName();
+        final Path expectedCacheDirectory = Paths.get(Defaults.MAVEN_TEST_RESOURCES, READONLY_CACHE_DIR);
+        assertThat(Files.exists(expectedCacheDirectory)).isTrue();
+
+        final HelloResource readOnlyHelloResource = smartMockFactory.createSmartMock(HelloResource.url, HelloResource.class, testMethodName);
+
+        final Greeting greeting1 = readOnlyHelloResource.greet();
+
+        assertThat(greeting1).isNotNull();
+        assertThat(greeting1.getGreeting()).isEqualTo("Hello world!");
+        assertThat(greeting1.getId()).isEqualTo(1);
+
+        final Greeting greeting2 = readOnlyHelloResource.greet();
+
+        assertThat(greeting2).isNotNull();
+        assertThat(greeting2.getGreeting()).isEqualTo("Hello world!");
+        // This check verifies that the live service was called, because the ID increments
+        assertThat(greeting2.getId()).isEqualTo(1);
+
+        // Ensure that it is not caching the objects in any way.. new objects are created from same data cache
+        assertThat(greeting1).isNotEqualTo(greeting2);
+
+        readOnlyHelloResource.greet();
+        readOnlyHelloResource.greet();
+
+        // Cache directory still exists
+        assertThat(Files.exists(expectedCacheDirectory)).isTrue();
 
     }
 
-    public static final class HelloResourceImpl implements HelloResource {
+    @Test
+    void readOnlyMode_noCache(TestInfo testInfo) {
 
-        @Override
-        public Greeting greet() {
-            return Greeting.builder()
-                    .id("1")
-                    .greeting("Hello world!")
-                    .build();
-        }
+        SmartMockRunConfiguration config = SmartMockRunConfiguration.builder()
+                .runStrategy(RunStrategy.READ_ONLY_MODE)
+                .testResourceDir(Defaults.MAVEN_TEST_RESOURCES)
+                .cacheDir("bad-cache-dir")
+                .cacheNamingStrategy(Defaults.CACHE_NAMING_STRATEGY)
+                .build();
 
-        @Override
-        public void willThrow() {
-            throw new ServerErrorException(500);
-        }
+        SmartMockFactory.BaseSmartMockFactory smartMockFactory = SmartMockFactoryBuilder.init(config);
+
+        // Baseline -> no files in cache
+        final String expectedCacheDirectoryName = testInfo.getTestMethod().get().getName();
+        final Path expectedCacheDirectory = Paths.get(Defaults.MAVEN_TEST_RESOURCES, Defaults.CACHE_DIR, expectedCacheDirectoryName);
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
+
+        final HelloResource readOnlyHelloResource = smartMockFactory.createSmartMock(HelloResource.url, HelloResource.class, expectedCacheDirectoryName);
+
+        assertThrows(SmartMockException.class, () -> readOnlyHelloResource.greet());
+
+        // Cache directory still exists
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
+
+        SmartMockTestUtil.deleteDirectory(expectedCacheDirectory.toFile());
+        //SmartMockTestUtil.deleteDirectory(Paths.get(Defaults.TEST_RESOURCES_DIR, TEST_CACHE_DIR).toFile());
+        assertThat(Files.exists(expectedCacheDirectory)).isFalse();
 
     }
 
-    // TODO pull into an actual util
-    public static String buildServerAddress(String address) {
-        return buildServerAddress(address, getPort());
-    }
+    /**
+     * Run this to setup the file system for the read only tests
+     * @param testInfo
+     */
+    @Test
+    @Disabled
+    public void createCache(TestInfo testInfo) {
 
-    public static String buildServerAddress(String address, int port) {
-        return String.format("http://0.0.0.0:%d/services/%s", port, address);
-    }
+        SmartMockRunConfiguration config = SmartMockRunConfiguration.builder()
+                .runStrategy(RunStrategy.SMART_CACHE_MODE)
+                .testResourceDir(Defaults.MAVEN_TEST_RESOURCES)
+                .cacheDir(READONLY_CACHE_DIR)
+                .cacheNamingStrategy(CacheNamingStrategy.STATIC_SCOPED)
+                .build();
 
-    public static int getPort() {
-        return 8181;
+        SmartMockFactory.BaseSmartMockFactory smartMockFactory = SmartMockFactoryBuilder.init(config);
+
+        // Baseline -> no files in cache
+        final String testMethodName = testInfo.getTestMethod().get().getName();
+        final Path expectedCacheDirectory = Paths.get(Defaults.MAVEN_TEST_RESOURCES, READONLY_CACHE_DIR);
+
+        final HelloResource helloResource = smartMockFactory.createSmartMock(HelloResource.url, HelloResource.class, testMethodName);
+
+        final Greeting greeting = helloResource.greet();
+
+        assertThat(Files.exists(expectedCacheDirectory)).isTrue();
+
     }
 
 }
