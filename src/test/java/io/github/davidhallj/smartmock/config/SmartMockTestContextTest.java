@@ -1,9 +1,9 @@
-package com.davidhallj.smartmock.config;
+package io.github.davidhallj.smartmock.config;
 
+import io.github.davidhallj.smartmock.config.SmartMockTestContext;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 class SmartMockTestContextTest {
 

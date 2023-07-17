@@ -1,6 +1,6 @@
-package com.davidhallj.smartmock.annotations;
+package io.github.davidhallj.smartmock.annotations;
 
-import com.davidhallj.smartmock.config.RunStrategy;
+import io.github.davidhallj.smartmock.config.RunStrategy;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

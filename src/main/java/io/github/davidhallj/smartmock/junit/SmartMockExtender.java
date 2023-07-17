@@ -1,6 +1,6 @@
-package com.davidhallj.smartmock.junit;
+package io.github.davidhallj.smartmock.junit;
 
-import com.davidhallj.smartmock.core.SmartMockAnnotations;
+import io.github.davidhallj.smartmock.core.SmartMockAnnotations;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.BeforeAllCallback;

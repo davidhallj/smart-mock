@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.jaxrs;
+package io.github.davidhallj.smartmock.jaxrs;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

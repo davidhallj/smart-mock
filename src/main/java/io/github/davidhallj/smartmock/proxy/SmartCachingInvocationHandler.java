@@ -1,10 +1,10 @@
-package com.davidhallj.smartmock.proxy;
+package io.github.davidhallj.smartmock.proxy;
 
-import com.davidhallj.smartmock.config.SmartMockConfiguration;
-import com.davidhallj.smartmock.config.SmartMockRunConfiguration;
-import com.davidhallj.smartmock.exception.SmartMockException;
-import com.davidhallj.smartmock.exceptionmapping.ExceptionResolver;
-import com.davidhallj.smartmock.util.SmartCache;
+import io.github.davidhallj.smartmock.config.SmartMockConfiguration;
+import io.github.davidhallj.smartmock.config.SmartMockRunConfiguration;
+import io.github.davidhallj.smartmock.exception.SmartMockException;
+import io.github.davidhallj.smartmock.exceptionmapping.ExceptionResolver;
+import io.github.davidhallj.smartmock.util.SmartCache;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 

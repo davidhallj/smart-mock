@@ -1,8 +1,8 @@
-package com.davidhallj.smartmock.util;
+package io.github.davidhallj.smartmock.util;
 
-import com.davidhallj.smartmock.config.SmartMockConfiguration;
-import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
-import com.davidhallj.smartmock.exception.SmartMockException;
+import io.github.davidhallj.smartmock.config.SmartMockConfiguration;
+import io.github.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
+import io.github.davidhallj.smartmock.exception.SmartMockException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

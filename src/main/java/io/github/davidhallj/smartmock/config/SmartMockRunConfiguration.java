@@ -1,9 +1,9 @@
-package com.davidhallj.smartmock.config;
+package io.github.davidhallj.smartmock.config;
 
-import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
-import com.davidhallj.smartmock.core.SmartMockStaticContext;
-import com.davidhallj.smartmock.exceptionmapping.ExceptionResolver;
-import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
+import io.github.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
+import io.github.davidhallj.smartmock.core.SmartMockStaticContext;
+import io.github.davidhallj.smartmock.exceptionmapping.ExceptionResolver;
+import io.github.davidhallj.smartmock.jaxrs.JaxrsFactory;
 import com.google.gson.Gson;
 import lombok.Builder;
 import lombok.Getter;

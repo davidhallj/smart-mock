@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.config.advanced;
+package io.github.davidhallj.smartmock.config.advanced;
 
 public enum CacheReadStrategy {
     /**

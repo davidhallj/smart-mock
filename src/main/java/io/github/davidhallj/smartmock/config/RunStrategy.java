@@ -1,8 +1,8 @@
-package com.davidhallj.smartmock.config;
+package io.github.davidhallj.smartmock.config;
 
-import com.davidhallj.smartmock.config.advanced.CacheReadStrategy;
-import com.davidhallj.smartmock.config.advanced.CacheWriteStrategy;
-import com.davidhallj.smartmock.config.advanced.CachingStrategy;
+import io.github.davidhallj.smartmock.config.advanced.CacheReadStrategy;
+import io.github.davidhallj.smartmock.config.advanced.CacheWriteStrategy;
+import io.github.davidhallj.smartmock.config.advanced.CachingStrategy;
 import lombok.AllArgsConstructor;
 
 // TODO : none of the sub enums hold any value -> their meaning has been hoisted up into the top level

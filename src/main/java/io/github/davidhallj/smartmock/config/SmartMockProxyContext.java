@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.config;
+package io.github.davidhallj.smartmock.config;
 
 import lombok.Builder;
 import lombok.Getter;

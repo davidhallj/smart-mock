@@ -1,6 +1,6 @@
-package com.davidhallj.smartmock.core;
+package io.github.davidhallj.smartmock.core;
 
-import com.davidhallj.smartmock.exception.SmartMockException;
+import io.github.davidhallj.smartmock.exception.SmartMockException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,19 +1,20 @@
-package com.davidhallj.smartmock;
+package io.github.davidhallj.smartmock;
 
-import com.davidhallj.smartmock.config.Defaults;
-import com.davidhallj.smartmock.config.RunStrategy;
-import com.davidhallj.smartmock.config.SmartMockRunConfiguration;
-import com.davidhallj.smartmock.config.SmartMockProxyContext;
-import com.davidhallj.smartmock.config.SmartMockTestContext;
-import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
-import com.davidhallj.smartmock.core.SmartMockFactory;
-import com.davidhallj.smartmock.core.SmartMockFactoryBuilder;
-import com.davidhallj.smartmock.core.SmartMockStaticContext;
-import com.davidhallj.smartmock.exception.SmartMockException;
-import com.davidhallj.smartmock.jaxrs.Greeting;
-import com.davidhallj.smartmock.jaxrs.HelloResource;
-import com.davidhallj.smartmock.jaxrs.HelloResourceImpl;
-import com.davidhallj.smartmock.util.SmartMockTestUtil;
+import io.github.davidhallj.smartmock.config.Defaults;
+import io.github.davidhallj.smartmock.config.RunStrategy;
+import io.github.davidhallj.smartmock.config.SmartMockRunConfiguration;
+import io.github.davidhallj.smartmock.config.SmartMockProxyContext;
+import io.github.davidhallj.smartmock.config.SmartMockTestContext;
+import io.github.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
+import io.github.davidhallj.smartmock.core.SmartMockFactory;
+import io.github.davidhallj.smartmock.core.SmartMockFactoryBuilder;
+import io.github.davidhallj.smartmock.core.SmartMockStaticContext;
+import io.github.davidhallj.smartmock.exception.SmartMockException;
+import io.github.davidhallj.smartmock.jaxrs.Greeting;
+import io.github.davidhallj.smartmock.jaxrs.HelloResource;
+import io.github.davidhallj.smartmock.jaxrs.HelloResourceImpl;
+import io.github.davidhallj.smartmock.util.SmartMockTestUtil;
+import io.github.davidhallj.smartmock.jaxrs.JaxrsTestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cxf.endpoint.Server;
 import org.junit.jupiter.api.AfterAll;
@@ -26,7 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.davidhallj.smartmock.jaxrs.JaxrsTestUtils.buildServerAddress;
+import static io.github.davidhallj.smartmock.jaxrs.JaxrsTestUtils.buildServerAddress;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -40,7 +41,7 @@ public class SmartMockTest {
     @BeforeAll
     public static void classSetup() {
         final HelloResourceImpl impl = new HelloResourceImpl();
-        final Server server = SmartMockStaticContext.JAXRS_FACTORY.createJaxrsServer(buildServerAddress("hello"), HelloResource.class, impl);
+        final Server server = SmartMockStaticContext.JAXRS_FACTORY.createJaxrsServer(JaxrsTestUtils.buildServerAddress("hello"), HelloResource.class, impl);
     }
 
     @AfterAll

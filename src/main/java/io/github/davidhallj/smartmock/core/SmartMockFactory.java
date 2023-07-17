@@ -1,13 +1,13 @@
-package com.davidhallj.smartmock.core;
+package io.github.davidhallj.smartmock.core;
 
-import com.davidhallj.smartmock.config.SmartMockConfiguration;
-import com.davidhallj.smartmock.config.SmartMockProxyContext;
-import com.davidhallj.smartmock.config.SmartMockRunConfiguration;
-import com.davidhallj.smartmock.config.SmartMockTestContext;
-import com.davidhallj.smartmock.exception.SmartMockException;
-import com.davidhallj.smartmock.jaxrs.JaxrsFactory;
-import com.davidhallj.smartmock.proxy.SmartCachingInvocationHandler;
-import com.davidhallj.smartmock.proxy.SmartMockProxyImpl;
+import io.github.davidhallj.smartmock.config.SmartMockConfiguration;
+import io.github.davidhallj.smartmock.config.SmartMockProxyContext;
+import io.github.davidhallj.smartmock.config.SmartMockRunConfiguration;
+import io.github.davidhallj.smartmock.config.SmartMockTestContext;
+import io.github.davidhallj.smartmock.exception.SmartMockException;
+import io.github.davidhallj.smartmock.jaxrs.JaxrsFactory;
+import io.github.davidhallj.smartmock.proxy.SmartCachingInvocationHandler;
+import io.github.davidhallj.smartmock.proxy.SmartMockProxyImpl;
 import lombok.Builder;
 
 import java.lang.reflect.InvocationHandler;

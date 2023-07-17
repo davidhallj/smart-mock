@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.jaxrs;
+package io.github.davidhallj.smartmock.jaxrs;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

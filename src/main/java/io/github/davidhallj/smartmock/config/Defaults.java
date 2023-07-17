@@ -1,8 +1,8 @@
-package com.davidhallj.smartmock.config;
+package io.github.davidhallj.smartmock.config;
 
-import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
-import com.davidhallj.smartmock.exceptionmapping.ExceptionResolver;
-import com.davidhallj.smartmock.exceptionmapping.WebExceptionResolver;
+import io.github.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
+import io.github.davidhallj.smartmock.exceptionmapping.ExceptionResolver;
+import io.github.davidhallj.smartmock.exceptionmapping.WebExceptionResolver;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

@@ -1,7 +1,7 @@
-package com.davidhallj.smartmock.annotations;
+package io.github.davidhallj.smartmock.annotations;
 
-import com.davidhallj.smartmock.config.Defaults;
-import com.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
+import io.github.davidhallj.smartmock.config.Defaults;
+import io.github.davidhallj.smartmock.config.advanced.CacheNamingStrategy;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

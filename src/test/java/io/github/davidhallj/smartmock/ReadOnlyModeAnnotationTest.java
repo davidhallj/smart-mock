@@ -1,14 +1,15 @@
-package com.davidhallj.smartmock;
+package io.github.davidhallj.smartmock;
 
-import com.davidhallj.smartmock.annotations.SmartMock;
-import com.davidhallj.smartmock.config.Defaults;
-import com.davidhallj.smartmock.config.RunStrategy;
-import com.davidhallj.smartmock.core.SmartMockStaticContext;
-import com.davidhallj.smartmock.exception.SmartMockException;
-import com.davidhallj.smartmock.jaxrs.Greeting;
-import com.davidhallj.smartmock.jaxrs.HelloResource;
-import com.davidhallj.smartmock.jaxrs.HelloResourceImpl;
-import com.davidhallj.smartmock.junit.SmartMockExtender;
+import io.github.davidhallj.smartmock.annotations.SmartMock;
+import io.github.davidhallj.smartmock.config.Defaults;
+import io.github.davidhallj.smartmock.config.RunStrategy;
+import io.github.davidhallj.smartmock.core.SmartMockStaticContext;
+import io.github.davidhallj.smartmock.exception.SmartMockException;
+import io.github.davidhallj.smartmock.jaxrs.Greeting;
+import io.github.davidhallj.smartmock.jaxrs.HelloResource;
+import io.github.davidhallj.smartmock.jaxrs.HelloResourceImpl;
+import io.github.davidhallj.smartmock.jaxrs.JaxrsTestUtils;
+import io.github.davidhallj.smartmock.junit.SmartMockExtender;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cxf.endpoint.Server;
 import org.junit.jupiter.api.AfterAll;
@@ -21,7 +22,7 @@ import javax.ws.rs.InternalServerErrorException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.davidhallj.smartmock.jaxrs.JaxrsTestUtils.buildServerAddress;
+import static io.github.davidhallj.smartmock.jaxrs.JaxrsTestUtils.buildServerAddress;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -40,7 +41,7 @@ public class ReadOnlyModeAnnotationTest {
     @BeforeAll
     public static void classSetup() {
         final HelloResourceImpl impl = new HelloResourceImpl();
-        final Server server = SmartMockStaticContext.JAXRS_FACTORY.createJaxrsServer(buildServerAddress("hello"), HelloResource.class, impl);
+        final Server server = SmartMockStaticContext.JAXRS_FACTORY.createJaxrsServer(JaxrsTestUtils.buildServerAddress("hello"), HelloResource.class, impl);
 
         // Baseline -> no files in cache
         assertThat(Files.exists(CACHE_ROOT)).isFalse();

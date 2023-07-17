@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.exception;
+package io.github.davidhallj.smartmock.exception;
 
 public class SmartMockException extends RuntimeException {
 

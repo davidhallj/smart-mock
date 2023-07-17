@@ -1,13 +1,13 @@
-package com.davidhallj.smartmock;
+package io.github.davidhallj.smartmock;
 
-import com.davidhallj.smartmock.annotations.SmartMock;
-import com.davidhallj.smartmock.config.Defaults;
-import com.davidhallj.smartmock.core.SmartMockStaticContext;
-import com.davidhallj.smartmock.jaxrs.Greeting;
-import com.davidhallj.smartmock.jaxrs.HelloResource;
-import com.davidhallj.smartmock.jaxrs.HelloResourceImpl;
-import com.davidhallj.smartmock.junit.SmartMockExtender;
-import com.davidhallj.smartmock.util.SmartMockTestUtil;
+import io.github.davidhallj.smartmock.annotations.SmartMock;
+import io.github.davidhallj.smartmock.config.Defaults;
+import io.github.davidhallj.smartmock.core.SmartMockStaticContext;
+import io.github.davidhallj.smartmock.jaxrs.Greeting;
+import io.github.davidhallj.smartmock.jaxrs.HelloResource;
+import io.github.davidhallj.smartmock.jaxrs.HelloResourceImpl;
+import io.github.davidhallj.smartmock.junit.SmartMockExtender;
+import io.github.davidhallj.smartmock.util.SmartMockTestUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cxf.endpoint.Server;
 import org.junit.jupiter.api.AfterAll;
@@ -20,7 +20,7 @@ import javax.ws.rs.InternalServerErrorException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.davidhallj.smartmock.jaxrs.JaxrsTestUtils.buildServerAddress;
+import static io.github.davidhallj.smartmock.jaxrs.JaxrsTestUtils.buildServerAddress;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

@@ -1,6 +1,6 @@
-package com.davidhallj.smartmock.config;
+package io.github.davidhallj.smartmock.config;
 
-import com.davidhallj.smartmock.annotations.SmartMock;
+import io.github.davidhallj.smartmock.annotations.SmartMock;
 import lombok.Builder;
 import lombok.Getter;
 

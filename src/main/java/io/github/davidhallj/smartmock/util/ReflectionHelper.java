@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.util;
+package io.github.davidhallj.smartmock.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

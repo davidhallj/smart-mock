@@ -1,9 +1,9 @@
-package com.davidhallj.smartmock.core;
+package io.github.davidhallj.smartmock.core;
 
-import com.davidhallj.smartmock.annotations.SmartMock;
-import com.davidhallj.smartmock.config.SmartMockConfiguration;
-import com.davidhallj.smartmock.exception.SmartMockException;
-import com.davidhallj.smartmock.util.ReflectionHelper;
+import io.github.davidhallj.smartmock.annotations.SmartMock;
+import io.github.davidhallj.smartmock.config.SmartMockConfiguration;
+import io.github.davidhallj.smartmock.exception.SmartMockException;
+import io.github.davidhallj.smartmock.util.ReflectionHelper;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
