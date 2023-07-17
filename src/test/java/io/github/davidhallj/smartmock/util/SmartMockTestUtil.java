@@ -1,4 +1,4 @@
-package com.davidhallj.smartmock.util;
+package io.github.davidhallj.smartmock.util;
 
 import java.io.File;
 import java.nio.file.Path;
